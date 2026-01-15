@@ -1,0 +1,253 @@
+============================================================================
+# SMARTTHERM - Systeme de Monitoring Intelligent
+# ============================================================================
+
+import tkinter as tk
+from datetime import datetime
+import random
+from PIL import Image, ImageTk
+
+class InterfaceMonitoring:
+    
+    def __init__(self, root):
+        """Initialise l'interface graphique SmartTherm"""
+        self.root = root
+        self.root.title("SmartTherm - Monitoring")
+        self.root.geometry("800x600")
+        self.root.configure(bg='#f5f5f5')
+        
+        # Couleurs du logo SmartTherm
+        self.bleu_fonce = "#1e3a8a"
+        self.bleu_clair = "#3b82f6"
+        self.orange = "#f97316"
+        self.gris_texte = "#374151"
+        
+        # Variables pour simuler des donnees
+        self.temp_actuelle = 22.0
+        self.nb_personnes_actuel = 3
+        self.consommation_actuelle = 1.2
+        self.systeme_fonctionne = True
+        
+        # En-tete avec logo et titre
+        self.frame_header = tk.Frame(root, bg='white', height=120)
+        self.frame_header.pack(fill=tk.X, pady=(0, 20))
+        self.frame_header.pack_propagate(False)
+        
+        # Charger et afficher le logo
+        try:
+            logo_path = "/Users/antoinegarrigues/Desktop/MonitoringRaspberry/logo.png"
+            logo_original = Image.open(logo_path)
+            logo_redim = logo_original.resize((80, 80), Image.Resampling.LANCZOS)
+            self.logo_img = ImageTk.PhotoImage(logo_redim)
+            
+            self.label_logo = tk.Label(self.frame_header, image=self.logo_img, bg='white')
+            self.label_logo.pack(side=tk.LEFT, padx=(30, 15), pady=20)
+        except Exception as e:
+            print(f"Logo non trouve: {e}")
+        
+        # Titre SmartTherm
+        self.frame_titre = tk.Frame(self.frame_header, bg='white')
+        self.frame_titre.pack(side=tk.LEFT, pady=20)
+        
+        self.titre = tk.Label(self.frame_titre, text="SMARTTHERM", 
+                             font=("Helvetica", 36, "bold"),
+                             fg=self.bleu_fonce, bg="white")
+        self.titre.pack(anchor=tk.W)
+        
+        self.sous_titre = tk.Label(self.frame_titre, text="Master Your Temperature", 
+                                   font=("Helvetica", 14),
+                                   fg=self.orange, bg="white")
+        self.sous_titre.pack(anchor=tk.W)
+        
+        # Zone principale des donnees
+        self.frame_principal = tk.Frame(root, bg='#f5f5f5')
+        self.frame_principal.pack(fill=tk.BOTH, expand=True, padx=30)
+        
+        # Grille 2x2 pour les cartes
+        self.carte_temperature = self.creer_carte(
+            self.frame_principal, "TEMPERATURE", 0, 0, self.orange
+        )
+        self.carte_etat = self.creer_carte(
+            self.frame_principal, "ETAT SYSTEME", 0, 1, self.bleu_clair
+        )
+        self.carte_personnes = self.creer_carte(
+            self.frame_principal, "PERSONNES", 1, 0, self.bleu_fonce
+        )
+        self.carte_energie = self.creer_carte(
+            self.frame_principal, "CONSOMMATION", 1, 1, self.orange
+        )
+        
+        # Boutons de controle
+        self.frame_boutons = tk.Frame(root, bg='#f5f5f5')
+        self.frame_boutons.pack(pady=20)
+        
+        self.btn_panne = tk.Button(self.frame_boutons, 
+                                   text="Simuler Panne",
+                                   command=self.toggle_panne,
+                                   font=("Helvetica", 11, "bold"),
+                                   bg="#ef4444", fg="white",
+                                   padx=15, pady=8,
+                                   relief=tk.FLAT,
+                                   cursor="hand2")
+        self.btn_panne.pack(side=tk.LEFT, padx=5)
+        
+        self.btn_plus = tk.Button(self.frame_boutons, 
+                                 text="+ Personne",
+                                 command=self.ajouter_personne,
+                                 font=("Helvetica", 11, "bold"),
+                                 bg=self.bleu_clair, fg="white",
+                                 padx=15, pady=8,
+                                 relief=tk.FLAT,
+                                 cursor="hand2")
+        self.btn_plus.pack(side=tk.LEFT, padx=5)
+        
+        self.btn_moins = tk.Button(self.frame_boutons, 
+                                   text="- Personne",
+                                   command=self.retirer_personne,
+                                   font=("Helvetica", 11, "bold"),
+                                   bg=self.bleu_fonce, fg="white",
+                                   padx=15, pady=8,
+                                   relief=tk.FLAT,
+                                   cursor="hand2")
+        self.btn_moins.pack(side=tk.LEFT, padx=5)
+        
+        # Footer avec horodatage
+        self.label_heure = tk.Label(root, text="",
+                                    font=("Helvetica", 10),
+                                    fg="#9ca3af", bg="#f5f5f5")
+        self.label_heure.pack(side=tk.BOTTOM, pady=10)
+        
+        self.mettre_a_jour()
+    
+    def creer_carte(self, parent, titre, row, col, couleur_accent):
+        """Cree une carte elegante pour afficher une metrique"""
+        carte = tk.Frame(parent, bg='white', relief=tk.FLAT, bd=0)
+        carte.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+        
+        barre_couleur = tk.Frame(carte, bg=couleur_accent, height=4)
+        barre_couleur.pack(fill=tk.X)
+        
+        contenu = tk.Frame(carte, bg='white')
+        contenu.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        label_titre = tk.Label(contenu, text=titre,
+                              font=("Helvetica", 12, "bold"),
+                              fg="#6b7280", bg="white")
+        label_titre.pack(anchor=tk.W)
+        
+        label_valeur = tk.Label(contenu, text="--",
+                               font=("Helvetica", 32, "bold"),
+                               fg=couleur_accent, bg="white")
+        label_valeur.pack(anchor=tk.W, pady=(5, 0))
+        
+        label_unite = tk.Label(contenu, text="",
+                              font=("Helvetica", 11),
+                              fg="#9ca3af", bg="white")
+        label_unite.pack(anchor=tk.W)
+        
+        parent.grid_rowconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_columnconfigure(1, weight=1)
+        
+        return {
+            'frame': carte,
+            'valeur': label_valeur,
+            'unite': label_unite
+        }
+    
+    def mettre_a_jour(self):
+        """Met a jour toutes les metriques"""
+        temperature = self.obtenir_temperature()
+        fonctionne = self.verifier_fonctionnement()
+        nb_personnes = self.compter_personnes()
+        consommation = self.mesurer_consommation()
+        
+        if temperature > 26:
+            couleur_temp = "#ef4444"
+            statut_temp = "Trop chaud"
+        elif temperature < 18:
+            couleur_temp = "#3b82f6"
+            statut_temp = "Trop froid"
+        else:
+            couleur_temp = self.orange
+            statut_temp = "Optimal"
+        
+        self.carte_temperature['valeur'].config(
+            text=f"{temperature:.1f}°",
+            fg=couleur_temp
+        )
+        self.carte_temperature['unite'].config(text=statut_temp)
+        
+        if fonctionne:
+            self.carte_etat['valeur'].config(text="✓", fg="#10b981")
+            self.carte_etat['unite'].config(text="Operationnel")
+        else:
+            self.carte_etat['valeur'].config(text="✗", fg="#ef4444")
+            self.carte_etat['unite'].config(text="Hors service")
+        
+        self.carte_personnes['valeur'].config(text=str(nb_personnes))
+        if nb_personnes == 0:
+            self.carte_personnes['unite'].config(text="Salle vide")
+        elif nb_personnes == 1:
+            self.carte_personnes['unite'].config(text="1 personne")
+        else:
+            self.carte_personnes['unite'].config(text="dans la salle")
+        
+        self.carte_energie['valeur'].config(text=f"{consommation:.2f}")
+        self.carte_energie['unite'].config(text="kWh - Moyenne")
+        
+        heure = datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
+        self.label_heure.config(text=f"Derniere actualisation: {heure}")
+        
+        self.root.after(2000, self.mettre_a_jour)
+    
+    def obtenir_temperature(self):
+        """Simule une temperature qui varie"""
+        variation = random.uniform(-0.3, 0.3)
+        self.temp_actuelle += variation
+        self.temp_actuelle = max(18, min(28, self.temp_actuelle))
+        return self.temp_actuelle
+    
+    def verifier_fonctionnement(self):
+        """Retourne l'etat du systeme"""
+        return self.systeme_fonctionne
+    
+    def compter_personnes(self):
+        """Simule le comptage de personnes"""
+        if random.random() < 0.1:
+            variation = random.choice([-1, 1])
+            self.nb_personnes_actuel += variation
+            self.nb_personnes_actuel = max(0, min(20, self.nb_personnes_actuel))
+        return self.nb_personnes_actuel
+    
+    def mesurer_consommation(self):
+        """Simule la consommation energetique"""
+        base = 0.5
+        par_personne = 0.15
+        self.consommation_actuelle = base + (self.nb_personnes_actuel * par_personne)
+        self.consommation_actuelle += random.uniform(-0.05, 0.05)
+        return self.consommation_actuelle
+    
+    def toggle_panne(self):
+        """Toggle panne/reparation"""
+        self.systeme_fonctionne = not self.systeme_fonctionne
+        if self.systeme_fonctionne:
+            self.btn_panne.config(text="Simuler Panne", bg="#ef4444")
+        else:
+            self.btn_panne.config(text="Reparer Systeme", bg="#10b981")
+    
+    def ajouter_personne(self):
+        """Ajoute une personne"""
+        if self.nb_personnes_actuel < 20:
+            self.nb_personnes_actuel += 1
+    
+    def retirer_personne(self):
+        """Retire une personne"""
+        if self.nb_personnes_actuel > 0:
+            self.nb_personnes_actuel -= 1
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = InterfaceMonitoring(root)
+    root.mainloop()
