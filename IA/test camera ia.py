@@ -1,6 +1,6 @@
 import cv2
 from ultralytics import YOLO
-#gdh
+#gdhhhhh
 # 1. Chargement du modèle
 # On utilise 'yolov8n.pt' (nano) qui est léger et rapide. 
 # Au premier lancement, il va se télécharger automatiquement.
