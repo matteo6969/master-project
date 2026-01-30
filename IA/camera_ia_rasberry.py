@@ -1,3 +1,4 @@
+
 import time
 import cv2
 import threading
@@ -59,14 +60,13 @@ def main():
     print("Démarrage Caméra...")
     picam2 = Picamera2()
    
-    # ON DEMANDE DU RGB PUR pour corriger le problème des têtes bleues
     config = picam2.create_video_configuration(
         main={"size": (640, 480), "format": "RGB888"}
     )
     picam2.configure(config)
     picam2.start()
 
-    WINDOW_NAME = "Smart Energy - 60FPS Display"
+    WINDOW_NAME = "Smart Energy - Projet Smartherm"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
     # Lancer l'IA en parallèle
@@ -78,12 +78,9 @@ def main():
 
     try:
         while True:
-            # 1. Capture ultra rapide (RGB)
+            # 1. Capture ultra rapide (BGR)
             frame_rgb = picam2.capture_array()
-
-            # 2. Correction Couleur (RGB -> BGR pour OpenCV)
-            # C'est CETTE ligne qui va régler ton problème de têtes bleues
-            frame_display = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+            frame_display = frame_rgb
 
             # 3. Envoi à l'IA (on envoie l'image propre)
             with lock:
